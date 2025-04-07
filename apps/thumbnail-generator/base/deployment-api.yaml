@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thumbnail-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thumbnail-api
+  template:
+    metadata:
+      labels:
+        app: thumbnail-api
+    spec:
+      containers:
+        - name: api
+          image: clevertang/thumbnail-app:latest
+          command: ["npm", "run", "start"]
+          ports:
+            - containerPort: 3000
+          env:
+            - name: SERVER_TYPE
+              value: server
+          envFrom:
+            - configMapRef:
+                name: thumbnail-config

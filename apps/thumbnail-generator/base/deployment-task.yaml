@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thumbnail-task
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thumbnail-task
+  template:
+    metadata:
+      labels:
+        app: thumbnail-task
+    spec:
+      containers:
+        - name: task
+          image: clevertang/thumbnail-app:latest
+          command: ["npm", "run", "start"]
+          env:
+            - name: SERVER_TYPE
+              value: worker
+          envFrom:
+            - configMapRef:
+                name: thumbnail-config
