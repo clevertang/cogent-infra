@@ -1,0 +1,17 @@
+global:
+  rbac:
+    create: true
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+grafana:
+  enabled: true
+  adminPassword: prom-operator
+  service:
+    type: NodePort
+
+alertmanager:
+  enabled: true

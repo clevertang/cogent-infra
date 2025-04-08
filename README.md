@@ -1,69 +1,162 @@
-# Thumbnail Generator Infrastructure (Kubernetes)
+# 🧩 Cogent Infra Deployment Guide
 
-This repository provides the Kubernetes deployment structure for the Thumbnail Generator API application, along with required services like MongoDB and MinIO. The structure is modular and designed to scale with multiple environments and applications.
+This repository defines the GitOps-based Kubernetes infrastructure, including:
+
+- Cluster-level configurations (IngressClass, Namespaces, RBAC)
+- Third-party dependencies (MinIO, MongoDB, Prometheus + Grafana)
+- Application deployment (thumbnail-generator)
 
 ---
 
 ## 📁 Project Structure
 
 ```
-infra/
-├── apps/
-│   └── thumbnail-generator/
-│       ├── base/                  # Base Kubernetes manifests (Deployment, Service, ConfigMap)
-│       └── overlays/
-│           └── local/             # Local dev overlay using Kustomize
-├── third-party/
-│   ├── minio/                     # MinIO deployment and service
-│   ├── mongodb/                   # MongoDB deployment and service
-│   └── prometheus-grafana/       # Placeholder for observability stack
-├── cluster/
-│   ├── base/                      # Placeholder for namespace, RBAC
-│   └── overlays/
-│       ├── dev/                   # Future environment-specific configurations
-│       └── prod/
+cluster/               ← Cluster-scoped infrastructure
+third-party/           ← Core infrastructure services
+apps/                  ← Kustomized application environments
+```
+
+Use ArgoCD to register each `apps/.../overlays/...` path as a GitOps target.
+
+---
+
+## 🧭 Local Deployment (Minikube)
+
+This project assumes **local Kubernetes development is done via [Minikube](https://minikube.sigs.k8s.io/)**.
+
+### ✅ Requirements
+
+- Minikube >= 1.30
+- Enabled addon: `ingress`
+- Access via NodePort or Ingress (`/etc/hosts`)
+
+### Start Minikube:
+
+```bash
+minikube start --cpus=2 --memory=4g --addons=ingress
+```
+
+> 💡 After the ingress addon is enabled, run the following **in a separate terminal**:
+
+```bash
+minikube tunnel
+```
+
+This exposes Ingress endpoints on `127.0.0.1`, allowing access to routes like:
+
+- http://grafana.local/
+- http://thumbnail.local/
+
+Also make sure to update `/etc/hosts`:
+
+```bash
+127.0.0.1 grafana.local thumbnail.local
 ```
 
 ---
 
-## 🚀 How to Run (Using Minikube)
+### One-click local install:
 
-### 1. Start a local cluster
 ```bash
-minikube start
+chmod +x reset-and-redeploy.sh
+./reset-and-redeploy.sh
 ```
 
-### 2. Deploy dependencies (MongoDB & MinIO)
-```bash
-kubectl apply -f third-party/minio/minio.yaml
-kubectl apply -f third-party/mongodb/mongodb.yaml
-```
+If you're using Docker Desktop or Kind, adjust:
+- IngressClass
+- NodePort/LoadBalancer service types
+- Persistent volumes
 
-### 3. Deploy the application using Kustomize
-```bash
-kubectl apply -k apps/thumbnail-generator/overlays/local
-```
+---
 
-### 4. Check services and pods
+## 📋 Recommended Manual Deployment Order
+
 ```bash
-kubectl get pods
-kubectl get svc
+# 1. Cluster Bootstrap
+kubectl apply -k cluster/base
+
+# 2. Monitoring (Prometheus + Grafana)
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+kubectl create namespace monitoring
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f third-party/prometheus-grafana/helm/values.base.yaml
+
+# 3. Middleware Components
+kubectl apply -k third-party/minio/base
+kubectl apply -k third-party/mongodb/base
+kubectl apply -k third-party/prometheus-grafana/base
+
+# 4. Application Deployment
+kubectl apply -k apps/thumbnail-generator/base
+
+# 5. Verify
+kubectl get pods -A
 ```
 
 ---
 
-## 💡 Notes
+## 📊 Observability (Prometheus + Grafana)
 
-- You can extend the overlays (`dev`, `prod`) for real-world use.
-- MinIO credentials are defined in the ConfigMap: `minio:minio123`
-- MongoDB runs without authentication for simplicity (dev only).
-- Placeholder `README.md` files are added to guide future additions (RBAC, monitoring, etc).
+- Default Grafana login: `admin / prom-operator`
+- Service type: `ClusterIP` (use Ingress or port-forward)
+- Dashboards:
+  - Pods: `6417`
+  - Nodes: `1860`
+  - kube-state-metrics: `13332`
+
+### Access Grafana:
+
+```bash
+# Option 1: via ingress
+http://grafana.local/
+
+# Option 2: port forward
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+```
 
 ---
 
-## 📬 Submission
+## ⚠️ Helm + CRD Caution
 
-Make sure to submit the repo with the `.git` history as a ZIP file per the assignment instructions.
+`ServiceMonitor` and other Prometheus CRDs **must be installed first**, via Helm:
+
+```bash
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f third-party/prometheus-grafana/helm/values.base.yaml
+```
+
+Only then apply:
+
+```bash
+kubectl apply -k third-party/prometheus-grafana/base
+```
+
+Check CRDs with:
+
+```bash
+kubectl get crd | grep servicemonitor
+```
 
 ---
 
+## 🔁 Environment Overlays (Cloud/Prod)
+
+```bash
+third-party/<service>/overlays/<provider>/<stage>/
+```
+
+Examples:
+
+- Use MongoDB Atlas:
+  ```bash
+  kubectl apply -k third-party/mongodb/overlays/aws/prod
+  ```
+- Switch to S3:
+  ```bash
+  kubectl apply -k third-party/minio/overlays/aws/prod
+  ```
+
+---
