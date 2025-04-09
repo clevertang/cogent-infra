@@ -27,7 +27,7 @@ helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   -n ingress-nginx --create-namespace \
   --set controller.metrics.enabled=true \
-  --set controller.service.type=ClusterIP \
+  --set controller.service.type=LoadBalancer \
   --set controller.serviceMonitor.enabled=true \
   --set controller.serviceMonitor.additionalLabels.release=kube-prometheus-stack
 
