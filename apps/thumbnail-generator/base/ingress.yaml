@@ -2,17 +2,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: thumbnail-api
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  namespace: default
 spec:
+  ingressClassName: nginx
   rules:
     - host: thumbnail.local
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - pathType: Prefix
             backend:
               service:
                 name: thumbnail-api
                 port:
                   number: 80
+            path: /

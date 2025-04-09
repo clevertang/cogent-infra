@@ -1,4 +1,3 @@
 resources:
-  - ingressclass.yaml
   - namespace.yaml
   - rbac.yaml
