@@ -1,0 +1,25 @@
+grafana:
+  adminPassword: prom-operator
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.local
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    ingressClassName: nginx
+
+prometheus:
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    hosts:
+      - prometheus.local
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    ingressClassName: nginx
+
+kube-state-metrics:
+  enabled: true
