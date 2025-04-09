@@ -12,10 +12,8 @@ if ! command -v minikube &> /dev/null; then
   exit 1
 fi
 
-if ! minikube status &> /dev/null; then
-  echo "⚠️ Minikube not running. Starting a new cluster..."
-  minikube start --cpus=2 --memory=4g --addons=ingress
-fi
+echo "⚠️ Always restart Minikube."
+minikube start --cpus=2 --memory=4g --addons=ingress
 
 echo "🔁 Re-applying manifests..."
 
