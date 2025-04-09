@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-prometheus-values
+  namespace: monitoring
+data:
+  values.yaml: |
+    grafana:
+      adminUser: admin
+      adminPassword: prom-operator
+      service:
+        type: ClusterIP
+      ingress:
+        enabled: true
+        hosts:
+          - grafana.local
+    
+    prometheus:
+      service:
+        type: ClusterIP
+      ingress:
+        enabled: true
+        hosts:
+          - prometheus.local
