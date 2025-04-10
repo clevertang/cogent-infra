@@ -60,6 +60,9 @@ kubectl apply -k third-party/mongodb/base
 # Apply custom resources
 kubectl apply -k apps/thumbnail-generator/base
 
+# apply Grafana dashboards
+kubectl apply -k third-party/prometheus-grafana/base
+
 
 echo "✅ Deployment complete. You may run 'kubectl get pods -A' to verify."
 echo "ℹ️ Tip: run 'minikube tunnel' in a separate terminal to enable ingress access via http://grafana.local/"
