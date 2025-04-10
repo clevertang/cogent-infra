@@ -12,7 +12,7 @@ if ! command -v minikube &> /dev/null; then
 fi
 
 echo "⚠️ Always restart Minikube."
-#minikube delete || true
+minikube delete || true
 minikube start --cpus=2 --memory=4g
 
 echo "🔁 Re-applying manifests..."
