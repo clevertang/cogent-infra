@@ -167,3 +167,27 @@ Legend:
 | Security | Basic RBAC, future SealedSecret and OPA | Vault, IRSA, Gatekeeper, full policy suites | Basic by default, allows opt-in hardening but not pre-enforced |
 
 These trade-offs are intended to keep the platform flexible and ready for production adaptation with incremental improvements.
+
+
+# Platform Design: Services and Responsibilities
+
+This document outlines the responsibilities and service guarantees provided by the Platform Infrastructure team, and how application developers can onboard and operate effectively.
+
+...
+
+## 6. Cost Monitoring and Estimation (Planned)
+
+### 6.1 What We Monitor 🔄
+To estimate operational and compute costs in future cloud environments:
+
+- **Per-pod resource usage** (via Prometheus, `container_cpu_usage_seconds_total`, `container_memory_usage_bytes`)
+- **Cluster-wide resource utilization** (CPU, memory, disk IO)
+- **S3 / MinIO request count & storage size** (via MinIO exporter or cloud cost analytics)
+
+### 6.2 Future Tooling 🔄
+- **kube-cost** or **OpenCost** (Cloud-native Foundation project)
+- **Prometheus-based dashboards** to visualize per-namespace or per-workload costs
+- Optionally: integration with cloud billing APIs (e.g. GCP Billing, AWS Cost Explorer)
+
+### 6.3 Why Not Now ❌
+> The current Minikube-based dev environment is single-node and cost-free. Estimation and tracking will become essential when migrating to EKS/GKE.
