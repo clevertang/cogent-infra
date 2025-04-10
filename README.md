@@ -16,6 +16,13 @@ This setup provisions a Kubernetes-based development environment using Minikube,
 
 ---
 
+## 🛠️ Prerequisites
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/) (v1.30.0+)
+- [Helm](https://helm.sh/docs/intro/install/) (v3.12.0+)
+- [Make](https://www.gnu.org/software/make/) (v4.3+)
+- [Docker](https://docs.docker.com/get-docker/) (v20.10.0+)
+
+
 ## 🚀 Deployment Steps
 
 ```bash

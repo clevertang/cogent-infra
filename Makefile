@@ -1,5 +1,12 @@
 .PHONY: all reset infra app monitoring port-forward
 
+# === Pre-requirements ===
+# - minikube >= v1.30
+# - helm >= v3.10
+# - kubectl configured for Minikube
+# - run `minikube tunnel` in separate terminal for ingress
+# - add to /etc/hosts: 127.0.0.1 grafana.local prometheus.local
+
 all: reset infra app port-forward
 
 reset:
@@ -36,13 +43,13 @@ port-forward:
 	@echo "1️⃣ Run the Minikube tunnel (in a separate terminal):"
 	@echo "   minikube tunnel"
 	@echo ""
-	@echo "2️⃣ Edit your /etc/hosts file (or Windows equivalent) to add:"
+	@echo "2️⃣ Add these lines to your /etc/hosts file:"
 	@echo "   127.0.0.1 grafana.local prometheus.local thumbnail.local"
 	@echo ""
-	@echo "3️⃣ Then access services in your browser:"
+	@echo "3️⃣ Then open your browser:"
 	@echo "   http://grafana.local"
 	@echo "   http://prometheus.local"
 	@echo "   http://thumbnail.local"
 	@echo ""
-	@echo "💡 You can verify Ingress is working by:"
-	@echo "   kubectl get ingress"
+	@echo "💡 You can verify Ingress status with:"
+	@echo "   kubectl get ingress -A"
