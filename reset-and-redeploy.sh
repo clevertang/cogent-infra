@@ -12,34 +12,13 @@ if ! command -v minikube &> /dev/null; then
 fi
 
 echo "⚠️ Always restart Minikube."
-minikube delete || true
+#minikube delete || true
 minikube start --cpus=2 --memory=4g
 
 echo "🔁 Re-applying manifests..."
 
 # Cluster Bootstrap
 kubectl apply -k cluster/base
-
-# 📦 Install ingress-nginx via Helm
-echo "📦 Installing ingress-nginx..."
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
-helm repo update
-helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-  -n ingress-nginx --create-namespace \
-  --set controller.metrics.enabled=true \
-  --set controller.service.type=LoadBalancer \
-  --set controller.serviceMonitor.enabled=true \
-  --set controller.serviceMonitor.additionalLabels.release=kube-prometheus-stack
-
-# ✅ Wait for ingress-nginx controller to be ready
-echo "⏳ Waiting for ingress-nginx controller to be ready..."
-kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller \
-  --timeout=120s || {
-    echo "❌ ingress-nginx controller not ready in time"
-    exit 1
-  }
 
 # Monitoring Stack
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
@@ -53,6 +32,26 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
 # Wait for CRDs before applying ServiceMonitor
 echo "⏳ Waiting for Prometheus CRDs to be established..."
 sleep 30
+
+# 📦 Install ingress-nginx via Helm
+echo "📦 Installing ingress-nginx..."
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
+helm repo update
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  -f third-party/ingress-nginx/helm/values.base.yaml
+
+# ✅ Wait for ingress-nginx controller to be ready
+echo "⏳ Waiting for ingress-nginx controller to be ready..."
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s || {
+    echo "❌ ingress-nginx controller not ready in time"
+    exit 1
+  }
+
 
 # Apply third-party components
 kubectl apply -k third-party/minio/base
