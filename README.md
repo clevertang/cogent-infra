@@ -1,69 +1,84 @@
-# 🧩 Cogent Infra Deployment Guide
+# Cogent Labs Platform Infra Assignment
 
-This repository defines the GitOps-based Kubernetes infrastructure, including:
-
-- Cluster-level configurations (IngressClass, Namespaces, RBAC)
-- Third-party dependencies (MinIO, MongoDB, Prometheus + Grafana)
-- Application deployment (thumbnail-generator)
+This repository contains the infrastructure implementation for the Cogent Labs Platform Infrastructure Assignment (Ops Focus).
 
 ---
 
-## 📁 Project Structure
+## 🌐 Overview
 
-```
-cluster/               ← Cluster-scoped infrastructure
-third-party/           ← Core infrastructure services
-apps/                  ← Kustomized application environments
-```
+This setup provisions a Kubernetes-based development environment using Minikube, deploying a thumbnail-generation API service with full observability via Prometheus and Grafana.
 
-Use ArgoCD to register each `apps/.../overlays/...` path as a GitOps target.
-
----
-
-## 🧭 Local Deployment (Minikube)
-
-This project assumes **local Kubernetes development is done via [Minikube](https://minikube.sigs.k8s.io/)**.
-
-### ✅ Requirements
-
-- Minikube >= 1.30
-- Enabled addon: `ingress`
-- Helm installed
-- Access via NodePort or Ingress (`/etc/hosts`)
+- Kubernetes: Provisioned locally with Minikube
+- App: Node.js thumbnail generator (`thumbnail-api`) and background task processor (`task`)
+- Ingress: Exposed via ingress-nginx controller
+- Monitoring: Prometheus + Grafana + Alerting + Dashboards
+- Autoscaling: Enabled via HorizontalPodAutoscaler (HPA)
 
 ---
 
-### 🚀 One-click install (Minikube)
+## 🚀 Deployment Steps
 
 ```bash
-chmod +x reset-and-redeploy.sh
-./reset-and-redeploy.sh
+make reset          # Resets Minikube environment
+make infra          # Installs ingress-nginx + kube-prometheus-stack + monitoring
+make app            # Deploys application components
+make port-forward   # Opens Grafana and API access locally
 ```
 
-> 💡 After the ingress addon is enabled, run the following **in a separate terminal**:
->
-> ```bash
-> minikube tunnel
-> ```
->
-> Also make sure to update `/etc/hosts`:
->
-> ```bash
-> 127.0.0.1 grafana.local prometheus.local thumbnail.local
-> ```
+---
+
+## 🔧 Components
+
+- [`apps/thumbnail-generator`](./apps/thumbnail-generator/README.md): App deployments and autoscaling
+- [`third-party/ingress-nginx`](./third-party/ingress-nginx/README.md): Ingress controller with monitoring
+- [`third-party/prometheus-grafana`](./third-party/prometheus-grafana/README.md): Observability stack
 
 ---
 
-## 🔍 Ingress-NGINX Monitoring Notes
+## 📊 Observability
 
-This setup uses Helm to install `ingress-nginx` with metrics enabled.
+### Dashboards
+- Grafana: auto-imports the NGINX Ingress dashboard (9614)
+- Dashboards load from ConfigMap with label `grafana_dashboard=1`
 
-Prometheus automatically scrapes metrics via a generated `ServiceMonitor`.
-
-You do **not** need to manually define a `servicemonitor-ingress-nginx.yaml` file.
-
-You can safely delete it if using the Helm-managed approach (which is recommended).
-
-Refer to Grafana Dashboard ID: **9614** for NGINX monitoring.
+### Alerts
+- Triggered on:
+  - 5xx error ratio > 5%
+  - Ingress API is unreachable
 
 ---
+
+## 🧪 SLI & SLO
+
+### SLIs
+- Request success rate (`nginx_ingress_controller_requests{status!~"5.."}`)
+- API availability (`up == 1`)
+- Latency buckets (via `histogram_quantile`)
+
+### Potential SLOs
+- 99.5% success rate over 5 minutes
+- 95% of requests complete in < 200ms
+
+---
+
+## 🔁 Disaster Recovery
+
+- Reset environment: `make reset`
+- Recreate everything: `make infra && make app`
+- All manifests are managed via Git and Kustomize
+
+---
+
+## 📦 Future Improvements
+
+- Add production cluster support (e.g., EKS / GKE)
+- Integrate CI/CD pipeline for deployment
+- Enable cost monitoring (e.g., via Kubecost or Prometheus metrics)
+- Secure API using NetworkPolicy + TLS certs
+- Use sealed-secrets / IRSA for better secret management
+
+---
+
+## 👷 Author Notes
+
+This system was built with forward-thinking architecture and observability-first practices in mind. It can be extended to production readiness by layering on CI/CD, multi-env configs, and secure credential management.
