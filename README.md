@@ -42,6 +42,9 @@ make port-forward   # Opens Grafana and API access locally
 
 ---
 
+## 📜 Documentation
+- [Design Document](./design-related/platform-design.md): High-level architecture and design decisions
+
 ## 📊 Observability
 
 ### Dashboards
