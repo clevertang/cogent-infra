@@ -23,7 +23,6 @@ kubectl apply -k cluster/base
 # Monitoring Stack
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
 helm repo update
-kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   -n monitoring \

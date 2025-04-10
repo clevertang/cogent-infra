@@ -6,3 +6,4 @@ resources:
   - deployment-task.yaml
   - ingress.yaml
   - service-api.yaml
+  - hpa.yaml
